@@ -1,0 +1,599 @@
+update on 2018/12/01 12:51
+最前边的一些话
+
+如果你连素数都不知道是什么，我建议你可以试试滚学科了
+
+如果你可以秒切这道题，那么这篇文章也帮不了你这个dalao，你也可以滚去看别的文章了
+
+这篇文章的源码基本有10k，LZ在后边敲的时候都一卡一卡的，希望能耐心看下去，另外来骗个赞
+
+0：一些前言
+在OIOI中，素数自古以来就是常考点，在NOIPNOIP等竞赛中，也多次涉及到关于素数的知识点，对于一个OIerDbOIerDb来说，应对这些考试最好的方法就是如何快速判断一个数是不是素数和打出一个大范围的质数表。
+
+接下来，我们将要学习这些方法。
+
+另：lz不太会用\LaTeXL 
+A
+ T 
+E
+?	 X，凑合看吧
+1：如何判断一个数是不是质数。
+1：根据定义：素数就是一个数除了11和他本身没有其他因数的数叫做质数。
+于是我们对于一个NN,可以可以从22枚举到N-1N?1，从而判断这个数是不是质数。
+
+代码如下：
+
+bool Is_prime(int n);
+{
+    if(n==1)return false;
+    if(n==2)return true;
+    for(register int i=2;i<n;i++)
+        if(n%i==0)return false;
+    return true;    
+}
+时间复杂度为O(N)O(N)。
+
+对于上述程序显然不能满足我们的需求，如NN较大时，这样的程序肯定会超时，我已我们要想办法优化以上程序。
+
+优化一
+我们不难发现NN的因数是成对出现的，所以对于任何一个整数NN，我们只需要从11枚举到\sqrt{N} 
+N
+?	 就可以了。
+
+于是代码如下：
+
+bool Is_prime(int n);
+{
+    if(n==1)return false;
+    if(n==2)return true;
+    for(register int i=2;i*i<=n;i++)
+        if(n%i==0)return false;
+    return true;    
+}
+上述程序时间复杂度为O(\sqrt{N})O( 
+N
+?	 )
+优化2
+根据lz多年的经验，已经达到O(\sqrt{N})O( 
+N
+?	 )的算法验证是不是素数的算法已经是最快的算法，知道有一天看到了这篇文章
+
+证明：令x≥1x≥1，将大于等于55的自然数表示如下： ......6x-1,6x,6x+1,6x+2,6x+3,6x+4,6x+5,6(x+1),6(x+1)+1............6x?1,6x,6x+1,6x+2,6x+3,6x+4,6x+5,6(x+1),6(x+1)+1......
+可以看到，不在6的倍数两侧，即6x6x两侧的数为6x+2,6x+3,6x+4...6x+2,6x+3,6x+4...由于2(3x+1),3(2x+1),2(3x+2),2(3x+1),3(2x+1),2(3x+2),
+所以它们一定不是素数，再除去6x6x本身，显然，素数要出现只可能出现在6x6x的相邻两侧。
+
+所以，基于以上条件，我们假如要判定的数为nn，则nn必定是6x-16x?1或6x+16x+1的形式，对于循环中6i-16i?1，6i6i，6i+16i+1,6i+2,6i+3,6i+46i+2,6i+3,6i+4，其中如果nn能被6i6i，6i+26i+2，6i+46i+4整除，则nn至少得是一个偶数，
+
+但是6x-16x?1或6x+16x+1的形式明显是一个奇数，故不成立；另外，如果nn能被6i+36i+3整除，则n至少能被33整除，
+
+但是6x6x能被33整除，故6x-16x?1或6x+16x+1（即nn）不可能被33整除，故不成立。综上，循环中只需要考虑6i-16i?1和6i+16i+1的情况，
+
+即循环的步长可以定为66，每次判断循环变量kk和k+2k+2的情况即可，代码如下:
+
+bool Is_prime(int n)
+{
+    if(n==1) return false;
+    if(n==2||n==3) return true;
+    if(n%6!=1&&n%6!=5) return false;
+    for(register int i=5;i*i<=n;i+=6)
+        if(n%i==0||n%(i+2)==0) return false;
+    return true;
+}
+理论上讲整体速度应该会是优化1代码的三倍的3倍。即O(\frac{\sqrt{N}}{3})O( 
+3
+N
+?	 
+?	 )
+暂且就这么认为吧
+
+小结：在对于素数的判断时，一般用第一种的优化方法就可以了，但是如果遇到了毒瘤出题人，最好是用第二种方法。
+2：质数的筛法
+0:使用第一种优化的方法从11到NN判断每一个数是不是素数，时间复杂度为O(N\sqrt{N})O(N 
+N
+?	 )
+代码：
+
+bool Is_prime(int n);
+{
+    if(n==1)return false;
+    if(n==2)return true;
+    for(register int i=2;i*i<=n;i++)
+        if(n%i==0)return false;
+    return true;    
+}
+const int N=100010
+bool prime[N];
+void make_prime()
+{
+    for(ri i=1;i<=N;i++)
+        prime[i]=Is_prime(i);
+    return;
+}
+1：一般筛法（埃拉托斯特尼筛法）：
+
+基本思想：素数的倍数一定不是素数
+
+实现方法：用一个长度为N+1N+1的数组保存信息（truetrue表示素数，falsefalse表示非素数），先假设所有的数都是素数（初始化为truetrue），从第一个素数22开始，把22的倍数都标记为非素数（置为falsefalse），一直到大于NN；然后进行下一趟，找到22后面的下一个素数33，进行同样的处理，直到最后，数组中依然为truetrue的数即为素数。
+
+P.S.:P.S.:特别的，11既不是素数，也不是合数，所以11要置为falsefalse
+例如，我们要求1-1001?100之间的素数，整个过程是这样的。
+
+我们先把22标记上truetrue，然后把从2-1002?100中所有22的倍数标为falsefalse 
+
+然后我们找到下一个素数33标记为truetrue，把33的倍数标为falsefalse 
+
+然后我们又找到了55，把55的倍数标为falsefalse 
+
+我们重复着上述过程，完成了对1-1001?100以内素数的检索。 
+
+另附这里有一张动图，还不懂的同学可以参照这幅图理解 
+
+代码如下：
+
+#include<cstring>
+#include<cmath>
+const int MAXN=1000010;
+bool prime[MAXN];
+void make_prime)()
+{
+    memset(prime,true,sizeof(prime));
+    prime[0]=prime[1]=false;
+    int t=sqrt(MAXN);
+    for(register int i=2;i<=t;i++)
+    {
+        if(prime[i])
+        {
+            for(register int j=2*i;j<MAXN,j+=i)
+            {
+                prime[j]=false;
+            }
+        }
+    }
+    return;
+}
+此方法的复杂度为O(\sum_{p<n}\frac{n}{p})=O(nloglogn)O(∑ 
+p<n
+?	  
+p
+n
+?	 )=O(nloglogn)
+通过上述代码，我们发现此方法还可以继续优化，因为上述的方法中，每一个有多组因数可能会被筛多次，例如：3030会被2,3,52,3,5各筛一次导致计算冗余，我们可以对此方法进行改进，得到更加高效的筛法（欧拉筛）
+
+代码如下：
+
+#include<cstring>
+#incldue<cmath>
+const int MAXN=1000010;
+bool prime[MAXN];
+int Prime[MAXN];
+int num=0;
+void make_prime()
+{
+    memset(prime,true,sizeof(prime));
+    prime[0]=prime[1]=false;
+    for(int i=2;i<=MAXN;i++)
+    {
+        if(prime[i])
+        {
+            Prime[num++]=i;
+        }
+        for(int j=0;j<num&&i*Prime[j]<MAXN;j++)
+        {
+            prime[i*Prime[j]]=false;
+            if(!(i%Prime[j]))
+                break;
+        }
+    }
+    return;
+}
+这个方法可以保证每个和合数在N/MN/M的最小素因子时被筛出，所以时间复杂度仅为O(N)O(N)已经可以满足大部分需求，在竞赛中，这种方法也可以在极短的时间内求出关于NN的质数表。
+
+但是这个算法的弊端在于，为了判断一个大数是否是素数必须从从头开始扫描，而且空间代价也受不了，故不能离散的判断。
+
+所以，我们要引入更高效的算法——Miller_Rabin算法。
+
+Miller_rabin算法描述
+
+首先介绍一下millermiller rabinrabin算法。
+
+miller_rabin是一种素性测试算法，用来判断一个大数是否是一个质数。 miller_rabin是一种随机算法，它有一定概率出错，设测试次数为ss，那么出错的概率是4^{-s}4 
+?s
+ ，至于为什么我也不会证明。我觉得它的复杂度是O(slog^2n)O(slog 
+2
+ n)，因为你要进行ss次，每次要进行一次快速幂，每次快速幂要O(log n)O(logn)次快速乘，每次快速乘又是log nlogn的，所以这一部分是log^{2} nlog 
+2
+ n的，另一部分是把nn分解成u*2^{k}u?2 
+k
+ ，复杂度是log nlogn，所以kk是log nlogn量级的，对于kk，每次要快速乘，所以这一部分的复杂度也是log^{2}nlog 
+2
+ n的，于是总复杂度O(mlog^{2}n)O(mlog 
+2
+ n)
+
+下面开始介绍miller_rabin的做法。
+
+首先我们知道，根据费马小定理，如果pp为质数且aa与pp互质，那么有
+
+a^{p-1}\equiv1\pmod{p}a 
+p?1
+ ≡1(modp)
+如果我们让a<na<n，那么只需要满足pp为质数即可。但是反过来，满足
+a^{p-1}\equiv1\pmod{p}a 
+p?1
+ ≡1(modp)
+的pp不一定是质数。但是幸运的是，对于大多数的pp，费马小定理的逆定理是对的，但是为了让我们得到正确是结果，我们需要提高正确率。所以接下来我们需要二次探测。
+
+若nn为质数，并且
+x^{2}\equiv1\pmod{n}x 
+2
+ ≡1(modn)
+那么x=1x=1或x=n-1x=n?1，因为x2=1x2=1,则x=1x=1或x=-1x=?1，而在模意义下这个-1?1就成了n-1n?1。我们来证明一下为什么在x^{2}\equiv1\pmod{p}x 
+2
+ ≡1(modp),且x≠1(mod p)x≠1(modp)，且 x≠p-1(mod p)x≠p?1(modp)时pp不是质数。
+
+x^{2}\equiv1\pmod{p}x 
+2
+ ≡1(modp)
+x^{2}-1\equiv0\pmod{p}x 
+2
+ ?1≡0(modp)
+(x-1)(x+1)\equiv0\pmod{p}(x?1)(x+1)≡0(modp)
+所以有p|(x-1)p|(x-1)p∣(x?1)p∣(x?1)或p|(x+1)p|(x+1)p∣(x+1)p∣(x+1)或p|(x+1)(x-1) p∣(x+1)(x?1)
+因为x≠p-1(modx≠p?1(mod p)p)
+
+所以(x+1)mod(x+1)mod p≠0p≠0,pp不整除x+1x+1
+
+因为x≠1(modx≠1(mod p)p)
+所以(x-1)(x?1) modmod p≠0p≠0,pp不整除x-1x?1
+
+所以只能是p|(x+1)(x-1)p∣(x+1)(x?1)
+由此我们可以发现x+1x+1和x-1x?1都不含pp的所有因子，而它们的乘积却含有的pp的全套因子，那么在相乘时x+1x+1和x-1x?1分别提供了一个非11非pp的因子，才能使乘积是pp的倍数，当然这两个因子可能相同。
+
+那么，我们可以证明出pp可以表示为两个非11非pp的数的乘积，那么就证明了pp是合数而不是质数了。
+
+我们可以根据这个性质进行二次探测。
+
+如果我们设要测试的数为n,n,若nn是22或nn是偶数，那么我们可以直接判断nn的奇偶，否则令p=n?1p=n?1，将pp分解成u*2^{k}u?2 
+k
+ ,枚举kk来不断进行二次探测。则那么我们随机一个底数xx，快速幂求出x^{u}x 
+u
+  modmod nn ，然后不断的x*xx?x modmod pp来进行二次探测。
+
+至于为什么在代码中这么做是对的，我看到一个很好的解释，在这里分享一下。
+
+a^{p-1}\equiv1\pmod{p}a 
+p?1
+ ≡1(modp)
+a^{u*2{k}}\equiv1\pmod{p}a 
+u?2k
+ ≡1(modp)
+a^{u*2^{k-1}}*a^{u*2^{k-1}}\equiv1\pmod{p}a 
+u?2 
+k?1
+ 
+ ?a 
+u?2 
+k?1
+ 
+ ≡1(modp)
+那么我们把a^{u*2^{k-1}}a 
+u?2 
+k?1
+ 
+ 看作xx，那么就是在当前a^{u*2^{k-1}}\equiv1\pmod{p}a 
+u?2 
+k?1
+ 
+ ≡1(modp)的时候验证是否是p-1p?1或者11即可。 另外最后别忘了用费马小定理来判断一下，代码中的xx其实的x^{p-1}\equiv1\pmod{p}x 
+p?1
+ ≡1(modp)之后的结果，所以只需要看最后的xx是否是11即可。
+
+代码实现如下：
+
+#include <iostream> 
+#include <cstdio> 
+#include <algorithm>  
+#include <cmath>  
+#include <cstring>  
+#include <map>  
+#define ll long long
+using namespace std;
+const int times = 20;
+int number = 0;
+map<ll, int>m;
+ll Random(ll n)//生成[ 0 , n ]的随机数
+{
+    return ((double)rand()/RAND_MAX*n+0.5);
+}
+ll q_mul(ll a, ll b, ll mod)//快速计算 (a*b) % mod
+{
+    ll ans=0;
+    while(b)
+    {
+        if(b&1)
+        {
+            b--;
+            ans=(ans+a)%mod;
+        }
+        b/=2;
+        a=(a+a)%mod;
+    }
+    return ans;
+}
+ll q_pow(ll a,ll b,ll mod)//快速计算 (a^b) % mod
+{
+    ll ans=1;
+    while(b)
+    {
+        if(b&1)
+        {
+            ans=q_mul(ans,a,mod );
+        }
+        b/=2;
+        a=q_mul(a,a,mod);
+    }
+    return ans;
+}
+bool witness(ll a,ll n)//miller_rabin算法的精华
+{//用检验算子a来检验n是不是素数
+    ll tem=n-1;
+    int j=0;
+    while(tem%2==0)
+    {
+        tem/=2;
+        j++;
+    }
+    //将n-1拆分为a^r * s
+    ll x=q_pow(a,tem,n); //得到a^r mod n
+    if(x==1||x==n-1) return true;//余数为1则为素数
+    while(j--) //否则试验条件2看是否有满足的 j
+    {
+        x=q_mul(x,x,n);
+        if(x==n-1)return true;
+    }
+    return false;
+}
+bool miller_rabin(ll n)//检验n是否是素数
+{
+
+    if(n==2)return true;
+    if(n<2||n%2==0)return false;//如果是2则是素数，如果<2或者是>2的偶数则不是素数
+    for(register int i=1;i<=times;i++)//做times次随机检验
+    {
+        ll a=Random(n-2)+1;//得到随机检验算子 a
+        if(!witness(a,n))return false;//用a检验n是否是素数
+    }
+    return true;
+}
+int main()
+{
+    ll x;
+    while(cin>>x)
+    {
+        if(miller_rabin(x))
+            cout<<"Yes"<<endl;
+        else
+            cout <<"No"<<endl;
+    }
+    return 0;
+}
+（话说这个应该归到判断素数的里边啊算了不搬了）
+
+另附：某位大佬在PPTPPT上的一个神仙算法
+
+此算法是O(n^{\frac{3}{4}}/log n)O(n 
+4
+3
+?	 
+ /logn)的，并且在该算法在洲阁筛和min25筛中应用广泛（作为一部分）
+
+这个算法名字好像叫做
+the Meissel, Lehmer, Lagarias, Miller, Odlyzko methodtheMeissel,Lehmer,Lagarias,Miller,Odlyzkomethod
+，网上的资料比较少。
+
+首先放几个定义，定义比较多。。。
+
+P_iP 
+i
+?	 表示第ii个素数，
+
+PI_iPI 
+i
+?	 表示ii以内素数个数,
+
+F_{n,m}F 
+n,m
+?	 表示nn以内不等于第ii至mm个素数及其倍数的数的个数，
+
+P2_{n,m}P2 
+n,m
+?	 表示nn以内只有两个素因数且最小的素因数大于P_mP 
+m
+?	 的数的个数，
+
+P3_{n,m}P3 
+n,m
+?	 表示nn以内只有三个素因数且最小的素因数大于 P_mP 
+m
+?	 的数的个数。
+
+注意，接下来提到的除法都是指向下取整。
+f明显可以递归计算，转移方程：f[n,m] = f[n,m-1] + f[n/p[m],m-1]f[n,m]=f[n,m?1]+f[n/p[m],m?1]
+根据大佬的PPTPPT，计算f的时间复杂度是O(m*n^{\frac{1}{2}})O(m?n 
+2
+1
+?	 
+ )。 但是蒟蒻我根本不会证明。。
+
+然后是p2p2的计算方法。p2[n,m] = \sum_{P_i[n/k]} - pi[k] + 1p2[n,m]=∑ 
+P 
+i
+?	 [n/k]
+?	 ?pi[k]+1，其中kk是所有大于P_mP 
+m
+?	 且小于n^{\frac{1}{2}}n 
+2
+1
+?	 
+ 的素数。
+
+接着是p3的计算方法。p3[n,m] = \sum_{p2[n/k,pi[k]-1]}p3[n,m]=∑ 
+p2[n/k,pi[k]?1]
+?	 ,其中kk是所有大于P_mP 
+m
+?	 且小于n^{\frac{1}{3}}n 
+3
+1
+?	 
+ 的素数。
+
+先介绍第一种计算Pi_nPi 
+n
+?	 的方法。线性筛预处理前n^\frac{1}{2}n 
+2
+1
+?	 
+ 的pp和PiPi。
+
+pi[n]=pi[n^{\frac{1}{3}}]+f[n,pi[n^{\frac{1}{3}}]]-1-p2[n,pi[n^{\frac{1}{3}}]][n]=pi[n 
+3
+1
+?	 
+ ]+f[n,pi[n 
+3
+1
+?	 
+ ]]?1?p2[n,pi[n 
+3
+1
+?	 
+ ]]。减一是为了排除掉1。
+
+这种方法的时间复杂度是O(n^{\frac{5}{6}} / log(n))O(n 
+6
+5
+?	 
+ /log(n))。时间复杂度的瓶颈在f的计算上，其中pi[n^{\frac{1}{3}}] ≈ n^{\frac{1}{3}} / log npi[n 
+3
+1
+?	 
+ ]≈n 
+3
+1
+?	 
+ /logn。
+
+为了进一步改善时间复杂度，我们要尽量减少ff的计算。以下是经过改进的第二种方法。
+
+还是线性筛预处理前n^{\frac{1}{2}}n 
+2
+1
+?	 
+ 的pp和pipi。
+
+得到：
+
+pi[n] = pi[n^{\frac{1}{4}}] + f[n,pi[n^{\frac{1}{4}}]] - 1 - p2[n,pi[n^{\frac{1}{4}}]] - p3[n,pi[n^{\frac{1}{4}}]]pi[n]=pi[n 
+4
+1
+?	 
+ ]+f[n,pi[n 
+4
+1
+?	 
+ ]]?1?p2[n,pi[n 
+4
+1
+?	 
+ ]]?p3[n,pi[n 
+4
+1
+?	 
+ ]]
+计算p3p3的时间复杂度还不到O(n^{\frac{2}{3}})O(n 
+3
+2
+?	 
+ )，所以瓶颈还在ff上，总时间复杂度为O(n^{\frac{3}{4}} / log n)O(n 
+4
+3
+?	 
+ /logn)。
+
+代码看看就好了。。。。
+
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+#include<cstring>
+#include<cstdlib>
+#include<ctime>
+#pragma warning(disable:4996)
+#define INF 2000000005
+#define lowbit(a) ((a)&-(a))
+#define FAIL -INF
+const long long MAXN=6893911;
+long long p[MAXN], cnt;
+bool mark[MAXN];
+int pi[MAXN];
+void init()
+{
+    long long i,j;
+    for (i=2;i<MAXN;i++)
+    {
+        if (!mark[i])
+            p[cnt++]=i;
+        pi[i]=pi[i-1]+!mark[i];
+        for (j=0;p[j]*i<MAXN&&j<cnt;j++)
+        {
+            mark[p[j]*i]=true;
+            if (i%p[j]==0)
+                break;
+        }
+    }
+}
+int f(long long n,int m)
+{
+    if (n==0)return 0;
+    if (m==0)return n-n/2;
+    return f(n,m-1)-f(n/p[m],m-1);
+}
+int Pi(long long N);
+int p2(long long n, int m)
+{
+    int ans=0;
+    for (int i=m+1;(long long)p[i]*p[i]<=n;i++)
+        ans+=Pi(n/p[i])-Pi(p[i])+1;
+    return ans;
+}
+int p3(long long n, int m)
+{
+    int ans=0;
+    for (int i=m+1;(long long)p[i]*p[i]*p[i]<=n;i++)
+        ans+=p2(n/p[i],i-1);
+    return ans;
+}
+int Pi(long long N)
+{
+    if (N<MAXN)return pi[N];
+    int lim=f(N,0.25)+1;
+    int i;
+    for (i=0;p[i]<=lim;i++);
+        int ans=i+f(N,i-1)-1-p2(N,i-1)-p3(N,i-1);
+    return ans;
+}
+int main()
+{
+    long long L,R;
+    scanf("%lld %lld",&L,&R);
+    init();
+    printf("%d",Pi(R)-Pi(L-1));
+    return 0;
+}
+例题：
+
+p3383【模板】线性筛素数
+
+P1865 A % B Problem
+
+可自己练习话说题目很基础啊
